@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-test-app
+  labels:
+    app: k8s-test-app
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: k8s-test-app
+  template:
+    metadata:
+      labels:
+        app: k8s-test-app
+        version: v1
+    spec:
+      containers:
+      - name: k8s-test-app
+        image: localhost:32000/k8s-test-app:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: APP_VERSION
+          value: "1.0.0"
+        - name: APP_ENVIRONMENT
+          value: "production"
+        - name: DEPLOYMENT_VERSION
+          value: "blue"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: k8s-test-secret
+              key: secret-key
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-test-service
+  labels:
+    app: k8s-test-app
+spec:
+  selector:
+    app: k8s-test-app
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: k8s-test-secret
+type: Opaque
+data:
+  secret-key: eW91ci1zZWNyZXQta2V5LWNoYW5nZS10aGlzLWluLXByb2R1Y3Rpb24=  # base64 encoded
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: k8s-test-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  ingressClassName: public
+  rules:
+  - host: k8s-test.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: k8s-test-service
+            port:
+              number: 80

@@ -295,5 +295,200 @@ class TestConfiguration:
         assert "version" in data
 
 
+class TestUtilityFunctions:
+    """Test utility functions and edge cases"""
+
+    def test_get_password_hash(self):
+        """Test password hashing function directly"""
+        from src.main import get_password_hash
+
+        password = "testpassword123"
+        hashed = get_password_hash(password)
+
+        # Should return a string
+        assert isinstance(hashed, str)
+        # Should be different from the original password
+        assert hashed != password
+        # Should be a valid bcrypt hash
+        assert hashed.startswith("$2b$")
+
+    def test_get_user_existing(self):
+        """Test get_user function with existing user"""
+        from src.main import get_user
+
+        user = get_user("testuser")
+        assert user is not None
+        assert user.username == "testuser"
+        assert user.email == "test@example.com"
+
+    def test_get_user_nonexistent(self):
+        """Test get_user function with non-existent user"""
+        from src.main import get_user
+
+        user = get_user("nonexistentuser")
+        assert user is None
+
+    def test_create_access_token_default_expiry(self):
+        """Test create_access_token with default expiry"""
+        from src.main import create_access_token
+
+        data = {"sub": "testuser"}
+        token = create_access_token(data)
+
+        assert isinstance(token, str)
+        assert len(token) > 0
+
+    def test_create_access_token_custom_expiry(self):
+        """Test create_access_token with custom expiry"""
+        from datetime import timedelta
+
+        from src.main import create_access_token
+
+        data = {"sub": "testuser"}
+        custom_expiry = timedelta(minutes=30)
+        token = create_access_token(data, expires_delta=custom_expiry)
+
+        assert isinstance(token, str)
+        assert len(token) > 0
+
+    def test_verify_password_direct(self):
+        """Test password verification function directly"""
+        from src.main import get_password_hash, verify_password
+
+        password = "testpassword123"
+        hashed = get_password_hash(password)
+
+        # Correct password should verify
+        assert verify_password(password, hashed) is True
+
+        # Wrong password should not verify
+        assert verify_password("wrongpassword", hashed) is False
+
+    def test_authenticate_user_success(self):
+        """Test authenticate_user function with correct credentials"""
+        from src.main import authenticate_user
+
+        # Existing user with correct password
+        user = authenticate_user("testuser", "testpassword")
+        assert user is not None
+        assert user.username == "testuser"
+
+    def test_authenticate_user_wrong_password(self):
+        """Test authenticate_user function with wrong password"""
+        from src.main import authenticate_user
+
+        # Existing user with wrong password
+        user = authenticate_user("testuser", "wrongpassword")
+        assert user is None
+
+    def test_authenticate_user_nonexistent(self):
+        """Test authenticate_user function with non-existent user"""
+        from src.main import authenticate_user
+
+        # Non-existent user
+        user = authenticate_user("nonexistent", "password")
+        assert user is None
+
+
+class TestAuthenticationEdgeCases:
+    """Test authentication edge cases and error paths"""
+
+    def test_protected_endpoint_no_auth(self):
+        """Test protected endpoint without authentication"""
+        response = client.get("/auth/protected")
+        assert response.status_code == 403
+
+    def test_protected_endpoint_invalid_token(self):
+        """Test protected endpoint with invalid token"""
+        headers = {"Authorization": "Bearer invalid_token"}
+        response = client.get("/auth/protected", headers=headers)
+        assert response.status_code == 401
+
+    def test_protected_endpoint_malformed_token(self):
+        """Test protected endpoint with malformed token"""
+        headers = {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature"
+        }
+        response = client.get("/auth/protected", headers=headers)
+        assert response.status_code == 401
+
+    def test_protected_endpoint_token_without_sub(self):
+        """Test protected endpoint with token missing 'sub' claim"""
+        from src.main import create_access_token
+
+        # Create token without 'sub' claim
+        token = create_access_token(
+            {"user": "testuser"}
+        )  # using 'user' instead of 'sub'
+        headers = {"Authorization": f"Bearer {token}"}
+        response = client.get("/auth/protected", headers=headers)
+        assert response.status_code == 401
+
+    def test_protected_endpoint_token_with_nonexistent_user(self):
+        """Test protected endpoint with token for non-existent user"""
+        from src.main import create_access_token
+
+        # Create token for non-existent user
+        token = create_access_token({"sub": "nonexistentuser"})
+        headers = {"Authorization": f"Bearer {token}"}
+        response = client.get("/auth/protected", headers=headers)
+        assert response.status_code == 401
+
+    def test_protected_endpoint_token_with_null_sub(self):
+        """Test protected endpoint with token containing null 'sub' claim"""
+        from src.main import create_access_token
+
+        # Create token with null sub
+        token = create_access_token({"sub": None})
+        headers = {"Authorization": f"Bearer {token}"}
+        response = client.get("/auth/protected", headers=headers)
+        assert response.status_code == 401
+
+
+class TestHealthCheckEdgeCases:
+    """Test health check edge cases"""
+
+    @patch("platform.system")
+    def test_health_check_windows(self, mock_system):
+        """Test health check on Windows platform"""
+        mock_system.return_value = "Windows"
+
+        response = client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert "system_info" in data
+
+    @patch("platform.system")
+    @patch("shutil.disk_usage")
+    def test_health_check_disk_usage_error(self, mock_disk_usage, mock_system):
+        """Test health check when disk usage fails"""
+        mock_system.return_value = "Linux"
+        mock_disk_usage.side_effect = OSError("Permission denied")
+
+        response = client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        # Should handle the error gracefully
+
+
+class TestTimeoutEndpoint:
+    """Test timeout simulation endpoint"""
+
+    def test_timeout_simulation_mocked(self):
+        """Test timeout endpoint with mocked sleep"""
+        with patch("src.main.asyncio.sleep") as mock_sleep:
+            mock_sleep.return_value = None  # Make it return immediately
+
+            response = client.get("/error/timeout")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["message"] == "This should timeout"
+            mock_sleep.assert_called_once_with(30)
+
+
+# ...existing code...
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

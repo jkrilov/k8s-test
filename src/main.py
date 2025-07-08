@@ -40,7 +40,11 @@ APP_ENVIRONMENT = os.getenv("APP_ENVIRONMENT", "development")
 DEPLOYMENT_VERSION = os.getenv("DEPLOYMENT_VERSION", "blue")
 
 # Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["bcrypt"], 
+    deprecated="auto",
+    bcrypt__rounds=12
+)
 security = HTTPBearer()
 
 # Prometheus metrics

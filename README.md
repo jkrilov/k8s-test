@@ -1,10 +1,10 @@
 # FastAPI Kubernetes Testing Application
 
-[![CI](https://github.com/jkrilov/k8s-test/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/ci.yml)
+[![CI](https://github.com/jkrilov/k8s-test/actions/workflows/ci.yml/badge.svg)](https://github.com/jkrilov/k8s-test/actions/workflows/ci.yml)
 
-[![Release](https://github.com/jkrilov/k8s-test/actions/workflows/release.yml/badge.svg)](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/release.yml)
+[![Release](https://github.com/jkrilov/k8s-test/actions/workflows/release.yml/badge.svg)](https://github.com/jkrilov/k8s-test/actions/workflows/release.yml)
 
-[![codecov](https://codecov.io/gh/jkrilov/k8s-test/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/k8s-test)
+[![codecov](https://codecov.io/github/jkrilov/k8s-test/graph/badge.svg?token=DJENLUL7E6)](https://codecov.io/github/jkrilov/k8s-test)
 
 A comprehensive FastAPI application designed for testing various Kubernetes features including load balancing, authentication, blue/green deployments, and observability.
 

@@ -448,20 +448,45 @@ class TestAuthenticationEdgeCases:
 class TestHealthCheckEdgeCases:
     """Test health check edge cases"""
 
+    @patch("psutil.disk_usage")
     @patch("platform.system")
-    def test_health_check_windows(self, mock_system):
+    def test_health_check_windows(self, mock_system, mock_disk_usage):
         """Test health check on Windows platform"""
         mock_system.return_value = "Windows"
+        # Mock disk usage for Windows C: drive
+        mock_disk_usage.return_value.percent = 45.2
 
         response = client.get("/health")
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
         assert "system_info" in data
+        assert data["system_info"]["disk_usage"] == 45.2
 
+        # Verify that disk_usage was called with "C:" for Windows
+        mock_disk_usage.assert_called_with("C:")
+
+    @patch("psutil.disk_usage")
     @patch("platform.system")
-    @patch("shutil.disk_usage")
-    def test_health_check_disk_usage_error(self, mock_disk_usage, mock_system):
+    def test_health_check_linux(self, mock_system, mock_disk_usage):
+        """Test health check on Linux platform"""
+        mock_system.return_value = "Linux"
+        # Mock disk usage for Linux root partition
+        mock_disk_usage.return_value.percent = 67.8
+
+        response = client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert "system_info" in data
+        assert data["system_info"]["disk_usage"] == 67.8
+
+        # Verify that disk_usage was called with "/" for Linux
+        mock_disk_usage.assert_called_with("/")
+
+    @patch("psutil.disk_usage")
+    @patch("platform.system")
+    def test_health_check_disk_usage_error(self, mock_system, mock_disk_usage):
         """Test health check when disk usage fails"""
         mock_system.return_value = "Linux"
         mock_disk_usage.side_effect = OSError("Permission denied")
@@ -470,7 +495,9 @@ class TestHealthCheckEdgeCases:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
-        # Should handle the error gracefully
+        assert "system_info" in data
+        # Should fallback to 0.0 when disk usage fails
+        assert data["system_info"]["disk_usage"] == 0.0
 
 
 class TestTimeoutEndpoint:
@@ -487,8 +514,6 @@ class TestTimeoutEndpoint:
             assert data["message"] == "This should timeout"
             mock_sleep.assert_called_once_with(30)
 
-
-# ...existing code...
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

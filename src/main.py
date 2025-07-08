@@ -235,10 +235,14 @@ async def ping():
 async def health_check():
     """Comprehensive health check endpoint"""
     # Get disk usage based on OS
-    if platform.system() != "Windows":
-        disk_usage = psutil.disk_usage("/").percent
-    else:
-        disk_usage = psutil.disk_usage("C:").percent
+    try:
+        if platform.system() != "Windows":
+            disk_usage = psutil.disk_usage("/").percent
+        else:
+            disk_usage = psutil.disk_usage("C:").percent
+    except (OSError, FileNotFoundError):
+        # Fallback if disk usage fails
+        disk_usage = 0.0
 
     system_info = {
         "hostname": platform.node(),

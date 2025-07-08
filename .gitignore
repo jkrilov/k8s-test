@@ -120,7 +120,6 @@ dmypy.json
 
 # UV
 .uv/
-uv.lock
 
 # VS Code
 .vscode/

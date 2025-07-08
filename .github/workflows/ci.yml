@@ -50,7 +50,7 @@ jobs:
       if: ${{ !cancelled() }}
       uses: codecov/test-results-action@v1
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        token: ${{ secrets.CODECOV }}
 
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4

@@ -22,25 +22,46 @@ This document provides solutions for common issues encountered with the GitHub A
 
 ### 2. Kubernetes Validation Errors
 
-**Error**: `Failed initializing schema` for ServiceMonitor/PrometheusRule
+**Error**: `Failed initializing schema` for ServiceMonitor/PrometheusRule or `connection refused` errors
 
 **Solution**: 
-- These are Custom Resource Definitions (CRDs) from Prometheus Operator
-- The workflow now validates core Kubernetes resources only
-- Monitoring resources require Prometheus Operator to be installed:
+- The workflow now validates core Kubernetes resources only using multiple validation layers
+- Custom Resource Definitions (CRDs) like ServiceMonitor/PrometheusRule are validated separately
+- The validation workflow includes:
+  1. YAML syntax validation with `yq`
+  2. Kubernetes schema validation with `kubectl --dry-run=client --validate=false`
+  3. Optional kubeval validation with `--ignore-missing-schemas`
+- For local development, monitoring resources require Prometheus Operator:
   ```bash
   kubectl apply -f https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.68.0/bundle.yaml
   ```
 
 ### 3. Docker Build Issues
 
-**Error**: Docker build fails or times out
+**Error**: `"/uv.lock": not found` or Docker build fails
 
 **Solutions**:
-- Ensure the `Dockerfile` is in the repository root
-- Check that all required files are copied in the Dockerfile
-- Verify the base image is accessible
+- Ensure `uv.lock` file exists in the repository root:
+  ```bash
+  uv lock
+  ```
+- Make sure all required files are committed to git
+- Verify the Dockerfile copies the correct files
 - Use Docker layer caching to speed up builds
+- The build should complete successfully with the generated lock file
+
+**Error**: `Unable to find image 'k8s-test-app:latest' locally` after build
+
+**Solution**:
+- When using `docker/build-push-action` with buildx, add `load: true` to load the image into the local Docker daemon:
+  ```yaml
+  - name: Build Docker image
+    uses: docker/build-push-action@v5
+    with:
+      context: .
+      load: true  # This loads the image locally
+      tags: k8s-test-app:latest
+  ```
 
 ### 4. Test Failures
 

@@ -46,17 +46,23 @@ jobs:
         verbose: true
       continue-on-error: true
 
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report-${{ matrix.python-version }}
+        path: htmlcov/
+
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV }}
 
-    - name: Upload coverage reports
+    - name: Upload test reports
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report-${{ matrix.python-version }}
-        path: htmlcov/
+        name: test-report-${{ matrix.python-version }}
+        path: junit.xml
 
   security-scan:
     runs-on: ubuntu-latest

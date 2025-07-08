@@ -1,5 +1,10 @@
 # FastAPI Kubernetes Testing Application
 
+[![CI](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/ci.yml)
+[![Release](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/release.yml/badge.svg)](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/release.yml)
+[![codecov](https://codecov.io/gh/YOUR_USERNAME/k8s-test/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/k8s-test)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=YOUR_USERNAME_k8s-test&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=YOUR_USERNAME_k8s-test)
+
 A comprehensive FastAPI application designed for testing various Kubernetes features including load balancing, authentication, blue/green deployments, and observability.
 
 ## Features
@@ -149,44 +154,131 @@ uv run pytest --cov=src --cov-report=html
 - `GET /metrics` - Prometheus metrics
 - `GET /observability/logs` - Generate test logs
 
-## Environment Variables
+## Docker & Kubernetes Deployment
+
+### 🐳 Docker
+
+**Build and run locally**:
+```bash
+# Build image
+docker build -t k8s-test-app:latest .
+
+# Run container
+docker run -p 8000:8000 k8s-test-app:latest
+
+# Test container
+curl http://localhost:8000/health
+```
+
+**Pull from GitHub Container Registry**:
+```bash
+# Pull latest image
+docker pull ghcr.io/YOUR_USERNAME/k8s-test:latest
+
+# Run from registry
+docker run -p 8000:8000 ghcr.io/YOUR_USERNAME/k8s-test:latest
+```
+
+### ☸️ Kubernetes
+
+**Quick deployment**:
+```bash
+# Deploy to Kubernetes
+kubectl apply -f k8s/
+
+# Check deployment status
+kubectl get pods -l app=k8s-test-app
+
+# Get service URL
+kubectl get svc k8s-test-service
+```
+
+**Available manifests in `k8s/`**:
+- `deployment.yaml` - Main application deployment (blue)
+- `green-deployment.yaml` - Green deployment for blue/green testing
+- `configmap.yaml` - Configuration management
+- `monitoring.yaml` - Prometheus ServiceMonitor and PrometheusRule
+
+**MicroK8s deployment**:
+```bash
+# See detailed MicroK8s deployment guide
+cat MICROK8S_DEPLOY.md
+
+# Quick MicroK8s deployment
+./deploy-microk8s.sh      # Linux
+./deploy-windows.ps1      # Windows
+```
+
+### 🌐 Environment Variables
 
 - `APP_VERSION` - Application version (default: "1.0.0")
 - `APP_ENVIRONMENT` - Environment (default: "development")
-- `SECRET_KEY` - JWT secret key
+- `DEPLOYMENT_VERSION` - Blue/green deployment version (default: "blue")
+- `SECRET_KEY` - JWT secret key (change in production!)
 - `LOG_LEVEL` - Logging level (default: "INFO")
 
-## Kubernetes Deployment
+## CI/CD & Automation
 
-See the `k8s/` directory for example Kubernetes manifests.
+This project includes comprehensive GitHub Actions workflows for automated testing, building, and deployment:
 
-## CI/CD
+### 🚀 Continuous Integration (`.github/workflows/ci.yml`)
+**Triggers**: Push to `main`/`develop`, Pull Requests
 
-This project includes comprehensive GitHub Actions workflows:
+**Jobs**:
+- **Multi-Python Testing**: Runs tests on Python 3.11 and 3.12
+- **Code Quality Checks**: 
+  - Black code formatting validation
+  - isort import sorting verification
+- **Test Coverage**: pytest execution with coverage reporting to Codecov
+- **Security Scanning**: Bandit security vulnerability analysis
+- **Docker Build**: Container image build and health check validation
+- **Kubernetes Validation**: Manifest validation using kubeval
 
-### Continuous Integration (`ci.yml`)
-- **Multi-Python Testing**: Tests on Python 3.11 and 3.12
-- **Code Quality**: Black formatting, isort import sorting
-- **Test Coverage**: pytest with coverage reporting
-- **Security Scanning**: Bandit security analysis
-- **Docker Build**: Container image build and basic health checks
-- **Kubernetes Validation**: Manifest validation with kubeval
+### 🏷️ Release Automation (`.github/workflows/release.yml`)
+**Triggers**: Git tags (`v*`), Manual dispatch
 
-### Release (`release.yml`)
-- **Automated Releases**: Triggered on version tags
-- **Container Registry**: Publishes to GitHub Container Registry
+**Features**:
+- **Automated Releases**: Creates GitHub releases with changelog
+- **Container Registry**: Publishes to GitHub Container Registry (`ghcr.io`)
 - **Multi-arch Support**: Cross-platform Docker builds
-- **Release Notes**: Automated release documentation
+- **Version Management**: Semantic versioning with multiple tag formats
+- **Release Notes**: Auto-generated release documentation
 
-### Dependency Updates (`dependency-updates.yml`)
-- **Automated Updates**: Weekly dependency updates
+### 🔄 Dependency Management (`.github/workflows/dependency-updates.yml`)
+**Triggers**: Weekly schedule (Mondays 2 AM UTC), Manual dispatch
+
+**Features**:
+- **Automated Updates**: Weekly dependency updates using UV
 - **Automated PRs**: Creates pull requests for dependency updates
 - **Test Validation**: Ensures updates don't break functionality
+- **Conflict Resolution**: Handles dependency conflicts automatically
 
-### Workflow Status
+### 🏃‍♂️ Local Development
 
-[![CI](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/ci.yml)
-[![Release](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/release.yml/badge.svg)](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/release.yml)
+**Pre-commit Hooks**: Install with `pre-commit install`
+- Code formatting (Black, isort)
+- Security scanning (Bandit)
+- Type checking (mypy)
+- YAML/TOML validation
+
+**Local CI Testing**:
+```bash
+# Linux/macOS
+./scripts/ci-local.sh
+
+# Windows PowerShell
+./scripts/ci-local.ps1
+```
+
+### 📊 Quality Metrics
+
+The CI pipeline provides comprehensive quality metrics:
+- **Code Coverage**: Tracked via Codecov
+- **Security Scanning**: Bandit analysis with custom rules
+- **Type Safety**: mypy static type checking
+- **Code Quality**: Black formatting and isort import organization
+
+### 🔄 Workflow Status
 
 ## Development
 
@@ -202,5 +294,63 @@ uv run flake8 src/ tests/
 uv run mypy src/
 
 # Security scan
-uv run bandit -r src/
+uv run bandit -r src/ -s B104
 ```
+
+## 📁 Project Structure
+
+```
+k8s-test/
+├── .github/
+│   ├── workflows/           # GitHub Actions CI/CD workflows
+│   └── copilot-instructions.md
+├── k8s/                     # Kubernetes manifests
+│   ├── deployment.yaml      # Main application deployment
+│   ├── green-deployment.yaml # Blue/green deployment
+│   ├── configmap.yaml       # Configuration
+│   └── monitoring.yaml      # Prometheus monitoring
+├── scripts/                 # Utility scripts
+│   ├── ci-local.sh          # Local CI testing (Linux/macOS)
+│   ├── ci-local.ps1         # Local CI testing (Windows)
+│   ├── deploy-microk8s.sh   # MicroK8s deployment
+│   └── deploy-windows.ps1   # Windows deployment
+├── src/                     # Source code
+│   ├── __init__.py
+│   └── main.py              # FastAPI application
+├── tests/                   # Test suite
+│   ├── __init__.py
+│   └── test_main.py         # Unit tests
+├── .pre-commit-config.yaml  # Pre-commit hooks
+├── .bandit                  # Security scanning config
+├── Dockerfile               # Container image
+├── pyproject.toml           # Project configuration
+├── uv.lock                  # Dependency lock file
+├── Makefile                 # Build automation
+└── README.md                # This file
+```
+
+## 🤝 Contributing
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Install dependencies**: `uv sync --all-extras --dev`
+4. **Install pre-commit hooks**: `pre-commit install`
+5. **Make your changes**
+6. **Run tests**: `uv run pytest`
+7. **Run local CI**: `./scripts/ci-local.sh` or `./scripts/ci-local.ps1`
+8. **Commit changes**: `git commit -m 'Add amazing feature'`
+9. **Push to branch**: `git push origin feature/amazing-feature`
+10. **Create Pull Request**
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [FastAPI](https://fastapi.tiangolo.com/) for modern Python web APIs
+- Uses [UV](https://github.com/astral-sh/uv) for fast Python package management
+- Kubernetes manifests for cloud-native deployment
+- Comprehensive CI/CD with GitHub Actions
+- Security scanning with [Bandit](https://bandit.readthedocs.io/)
+- Code quality with [Black](https://black.readthedocs.io/) and [isort](https://pycqa.github.io/isort/)

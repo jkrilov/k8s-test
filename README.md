@@ -160,6 +160,34 @@ uv run pytest --cov=src --cov-report=html
 
 See the `k8s/` directory for example Kubernetes manifests.
 
+## CI/CD
+
+This project includes comprehensive GitHub Actions workflows:
+
+### Continuous Integration (`ci.yml`)
+- **Multi-Python Testing**: Tests on Python 3.11 and 3.12
+- **Code Quality**: Black formatting, isort import sorting
+- **Test Coverage**: pytest with coverage reporting
+- **Security Scanning**: Bandit security analysis
+- **Docker Build**: Container image build and basic health checks
+- **Kubernetes Validation**: Manifest validation with kubeval
+
+### Release (`release.yml`)
+- **Automated Releases**: Triggered on version tags
+- **Container Registry**: Publishes to GitHub Container Registry
+- **Multi-arch Support**: Cross-platform Docker builds
+- **Release Notes**: Automated release documentation
+
+### Dependency Updates (`dependency-updates.yml`)
+- **Automated Updates**: Weekly dependency updates
+- **Automated PRs**: Creates pull requests for dependency updates
+- **Test Validation**: Ensures updates don't break functionality
+
+### Workflow Status
+
+[![CI](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/ci.yml)
+[![Release](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/release.yml/badge.svg)](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/release.yml)
+
 ## Development
 
 ```bash
@@ -172,4 +200,7 @@ uv run flake8 src/ tests/
 
 # Type checking
 uv run mypy src/
+
+# Security scan
+uv run bandit -r src/
 ```

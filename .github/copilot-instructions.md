@@ -33,7 +33,7 @@ This is a FastAPI application designed specifically for testing Kubernetes featu
 - FastAPI with uvicorn
 - Pydantic for data validation
 - python-jose for JWT tokens
-- passlib for password hashing
+- bcrypt for password hashing
 - prometheus-client for metrics
 - psutil for system information
 - httpx for HTTP client functionality

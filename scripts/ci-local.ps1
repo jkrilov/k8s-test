@@ -18,4 +18,7 @@ uv run bandit -r src/ -s B104
 Write-Host "5. Testing Docker build..." -ForegroundColor Blue
 docker build -t k8s-test-app:latest .
 
+Write-Host "6. Validating Kubernetes manifests..." -ForegroundColor Blue
+./scripts/validate-k8s.ps1
+
 Write-Host "✅ All local CI tests passed!" -ForegroundColor Green

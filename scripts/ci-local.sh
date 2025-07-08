@@ -21,4 +21,7 @@ uv run bandit -r src/ -s B104
 echo "5. Testing Docker build..."
 docker build -t k8s-test-app:latest .
 
+echo "6. Validating Kubernetes manifests..."
+./scripts/validate-k8s.sh
+
 echo "✅ All local CI tests passed!"

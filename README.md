@@ -3,7 +3,6 @@
 [![CI](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/ci.yml)
 [![Release](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/release.yml/badge.svg)](https://github.com/YOUR_USERNAME/k8s-test/actions/workflows/release.yml)
 [![codecov](https://codecov.io/gh/YOUR_USERNAME/k8s-test/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/k8s-test)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=YOUR_USERNAME_k8s-test&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=YOUR_USERNAME_k8s-test)
 
 A comprehensive FastAPI application designed for testing various Kubernetes features including load balancing, authentication, blue/green deployments, and observability.
 
@@ -270,13 +269,28 @@ This project includes comprehensive GitHub Actions workflows for automated testi
 ./scripts/ci-local.ps1
 ```
 
+**Kubernetes Validation**:
+```bash
+# Linux/macOS
+./scripts/validate-k8s.sh
+
+# Windows PowerShell
+./scripts/validate-k8s.ps1
+```
+
 ### 📊 Quality Metrics
 
 The CI pipeline provides comprehensive quality metrics:
-- **Code Coverage**: Tracked via Codecov
+- **Code Coverage**: Tracked via Codecov (optional, requires `CODECOV_TOKEN` secret)
 - **Security Scanning**: Bandit analysis with custom rules
 - **Type Safety**: mypy static type checking
 - **Code Quality**: Black formatting and isort import organization
+
+**Setting up Codecov** (optional):
+1. Sign up at [codecov.io](https://codecov.io)
+2. Connect your GitHub repository
+3. Add `CODECOV_TOKEN` to your GitHub repository secrets
+4. The coverage badge will start working after the first successful upload
 
 ### 🔄 Workflow Status
 

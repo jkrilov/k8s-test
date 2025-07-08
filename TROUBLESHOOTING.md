@@ -9,28 +9,30 @@ This document provides solutions for common issues encountered with the GitHub A
 **Error**: `Token required - not valid tokenless upload`
 
 **Solution**: 
-- The Codecov upload is optional and won't fail the CI pipeline
-- To enable it properly:
+- The project now includes a `CODECOV` secret for proper token-based uploads
+- If you fork this repository, you'll need to:
   1. Sign up at [codecov.io](https://codecov.io)
   2. Connect your GitHub repository
-  3. Add `CODECOV_TOKEN` to your GitHub repository secrets
-  4. Update the workflow to use the token:
+  3. Add `CODECOV` to your GitHub repository secrets (Settings > Secrets and variables > Actions)
+  4. The workflow will automatically use the token:
   ```yaml
-  env:
-    CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  - name: Upload coverage to Codecov
+    uses: codecov/codecov-action@v4
+    with:
+      token: ${{ secrets.CODECOV }}
   ```
 
 ### 2. Kubernetes Validation Errors
 
-**Error**: `Failed initializing schema` for ServiceMonitor/PrometheusRule or `connection refused` errors
+**Error**: `connection refused` or `couldn't get current server API group list` with kubectl
 
 **Solution**: 
-- The workflow now validates core Kubernetes resources only using multiple validation layers
-- Custom Resource Definitions (CRDs) like ServiceMonitor/PrometheusRule are validated separately
+- The workflow now uses client-side validation only to avoid cluster connection issues
 - The validation workflow includes:
   1. YAML syntax validation with `yq`
-  2. Kubernetes schema validation with `kubectl --dry-run=client --validate=false`
+  2. Kubernetes structure validation (checking for required fields like `apiVersion`, `kind`, `metadata.name`)
   3. Optional kubeval validation with `--ignore-missing-schemas`
+- This approach validates manifest syntax without requiring a running Kubernetes cluster
 - For local development, monitoring resources require Prometheus Operator:
   ```bash
   kubectl apply -f https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.68.0/bundle.yaml

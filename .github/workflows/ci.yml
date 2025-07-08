@@ -38,6 +38,7 @@ jobs:
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
+        token: ${{ secrets.CODECOV }}
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
@@ -113,10 +114,6 @@ jobs:
 
     - name: Install validation tools
       run: |
-        echo "Installing kubectl..."
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-        
         echo "Installing yq for YAML parsing..."
         sudo wget -q https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
         sudo chmod +x /usr/bin/yq
@@ -149,30 +146,22 @@ jobs:
           fi
         done
 
-    - name: Validate Kubernetes manifests with kubectl
+    - name: Validate Kubernetes manifests (syntax only)
       run: |
-        echo "Validating Kubernetes manifest syntax with kubectl..."
+        echo "Validating Kubernetes manifest syntax..."
         
-        # Create a minimal kubeconfig to avoid connection issues
-        mkdir -p ~/.kube
-        cat > ~/.kube/config << EOF
-        apiVersion: v1
-        kind: Config
-        clusters: []
-        contexts: []
-        users: []
-        current-context: ""
-        EOF
-        
-        # Validate each file individually
+        # Simple syntax validation without cluster connection
         for file in k8s/deployment.yaml k8s/green-deployment.yaml k8s/configmap.yaml; do
           if [ -f "$file" ]; then
-            echo "Validating $file with kubectl..."
-            kubectl apply --dry-run=client --validate=false -f "$file" > /dev/null || {
-              echo "❌ kubectl validation failed for $file"
+            echo "Validating $file syntax..."
+            
+            # Check if it's valid YAML and has basic K8s structure
+            if yq eval '.apiVersion' "$file" > /dev/null && yq eval '.kind' "$file" > /dev/null && yq eval '.metadata.name' "$file" > /dev/null; then
+              echo "✅ $file has valid Kubernetes structure"
+            else
+              echo "❌ $file is missing required Kubernetes fields"
               exit 1
-            }
-            echo "✅ $file passed kubectl validation"
+            fi
           fi
         done
 

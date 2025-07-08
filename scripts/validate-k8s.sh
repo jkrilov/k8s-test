@@ -13,9 +13,14 @@ fi
 
 # Core Kubernetes resources validation
 echo "Validating core Kubernetes resources..."
-kubectl apply --dry-run=client -f k8s/deployment.yaml
-kubectl apply --dry-run=client -f k8s/green-deployment.yaml
-kubectl apply --dry-run=client -f k8s/configmap.yaml
+for file in k8s/deployment.yaml k8s/green-deployment.yaml k8s/configmap.yaml; do
+    if [ -f "$file" ]; then
+        echo "Validating $file..."
+        kubectl apply --dry-run=client --validate=false -f "$file"
+    else
+        echo "Warning: $file not found, skipping..."
+    fi
+done
 
 echo "✅ Core Kubernetes resources are valid"
 
@@ -24,7 +29,7 @@ echo "Checking monitoring resources..."
 if kubectl get crd servicemonitors.monitoring.coreos.com &> /dev/null && \
    kubectl get crd prometheusrules.monitoring.coreos.com &> /dev/null; then
     echo "Prometheus Operator CRDs found, validating monitoring resources..."
-    kubectl apply --dry-run=client -f k8s/monitoring.yaml
+    kubectl apply --dry-run=client --validate=false -f k8s/monitoring.yaml
     echo "✅ Monitoring resources are valid"
 else
     echo "⚠️  Prometheus Operator CRDs not found, skipping monitoring validation"

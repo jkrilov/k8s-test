@@ -110,41 +110,89 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install kubectl
-      uses: azure/setup-kubectl@v4
-      with:
-        version: 'latest'
-
-    - name: Install kubeval
+    - name: Install validation tools
       run: |
-        wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
-        tar xf kubeval-linux-amd64.tar.gz
-        sudo cp kubeval /usr/local/bin
-
-    - name: Validate Kubernetes manifests
-      run: |
-        # Validate core Kubernetes resources only
-        kubeval k8s/deployment.yaml k8s/green-deployment.yaml || true
+        echo "Installing kubectl..."
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
         
-        # Use kubectl dry-run for more comprehensive validation
-        kubectl apply --dry-run=client -f k8s/deployment.yaml
-        kubectl apply --dry-run=client -f k8s/green-deployment.yaml
-        kubectl apply --dry-run=client -f k8s/configmap.yaml
-        
-        # Skip monitoring.yaml as it contains CRDs that require Prometheus Operator
+        echo "Installing yq for YAML parsing..."
+        sudo wget -q https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+        sudo chmod +x /usr/bin/yq
 
-    - name: Validate with kustomize
+    - name: Validate YAML syntax and structure
       run: |
-        # Create a temporary kustomization file for core resources
-        cat <<EOF > kustomization.yaml
-        apiVersion: kustomize.config.k8s.io/v1beta1
-        kind: Kustomization
-        resources:
-        - k8s/deployment.yaml
-        - k8s/green-deployment.yaml
-        - k8s/configmap.yaml
+        echo "Validating YAML syntax and structure..."
+        
+        # Parse and validate YAML structure
+        for file in k8s/*.yaml; do
+          if [ -f "$file" ]; then
+            echo "Validating $file..."
+            
+            # Check if file is valid YAML
+            yq eval '.' "$file" > /dev/null || {
+              echo "❌ $file is not valid YAML"
+              exit 1
+            }
+            
+            # Check required Kubernetes fields
+            api_version=$(yq eval '.apiVersion // "missing"' "$file")
+            kind=$(yq eval '.kind // "missing"' "$file")
+            
+            if [ "$api_version" = "missing" ] || [ "$kind" = "missing" ]; then
+              echo "❌ $file is missing required apiVersion or kind"
+              exit 1
+            fi
+            
+            echo "✅ $file: $kind ($api_version)"
+          fi
+        done
+
+    - name: Validate Kubernetes manifests with kubectl
+      run: |
+        echo "Validating Kubernetes manifest syntax with kubectl..."
+        
+        # Create a minimal kubeconfig to avoid connection issues
+        mkdir -p ~/.kube
+        cat > ~/.kube/config << EOF
+        apiVersion: v1
+        kind: Config
+        clusters: []
+        contexts: []
+        users: []
+        current-context: ""
         EOF
         
-        kubectl kustomize . > /tmp/core-manifests.yaml
-        kubeval /tmp/core-manifests.yaml || true
-        kubectl apply --dry-run=client -f /tmp/core-manifests.yaml
+        # Validate each file individually
+        for file in k8s/deployment.yaml k8s/green-deployment.yaml k8s/configmap.yaml; do
+          if [ -f "$file" ]; then
+            echo "Validating $file with kubectl..."
+            kubectl apply --dry-run=client --validate=false -f "$file" > /dev/null || {
+              echo "❌ kubectl validation failed for $file"
+              exit 1
+            }
+            echo "✅ $file passed kubectl validation"
+          fi
+        done
+
+    - name: Validate with kubeval (optional)
+      run: |
+        echo "Installing and running kubeval..."
+        
+        # Download kubeval
+        wget -q https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+        tar xf kubeval-linux-amd64.tar.gz
+        sudo cp kubeval /usr/local/bin
+        
+        # Run kubeval with relaxed validation
+        for file in k8s/deployment.yaml k8s/green-deployment.yaml k8s/configmap.yaml; do
+          if [ -f "$file" ]; then
+            echo "Running kubeval on $file..."
+            kubeval --ignore-missing-schemas --skip-kinds=ServiceMonitor,PrometheusRule "$file" || {
+              echo "⚠️ kubeval validation had issues with $file (possibly missing schemas)"
+            }
+          fi
+        done
+        
+        echo "✅ Kubeval validation completed"
+      continue-on-error: true

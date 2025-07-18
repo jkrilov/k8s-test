@@ -12,8 +12,8 @@ sudo microk8s enable prometheus
 microk8s kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=nginx-ingress --namespace=ingress --timeout=300s
 
 # 3. Build and push Docker image (run from your project directory)
-docker build -t localhost:32000/k8s-test-app:latest .
-docker push localhost:32000/k8s-test-app:latest
+sudo docker build -t localhost:32000/k8s-test-app:latest .
+sudo docker push localhost:32000/k8s-test-app:latest
 
 # 4. Apply Kubernetes manifests
 sudo microk8s kubectl apply -f k8s/

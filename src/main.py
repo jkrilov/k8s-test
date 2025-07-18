@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
+APP_VERSION = os.getenv("APP_VERSION", "1.1.0")
 APP_ENVIRONMENT = os.getenv("APP_ENVIRONMENT", "development")
 DEPLOYMENT_VERSION = os.getenv("DEPLOYMENT_VERSION", "blue")
 

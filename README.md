@@ -212,7 +212,7 @@ cat MICROK8S_DEPLOY.md
 
 ### 🌐 Environment Variables
 
-- `APP_VERSION` - Application version (default: "1.0.0")
+- `APP_VERSION` - Application version (default: "1.1.0")
 - `APP_ENVIRONMENT` - Environment (default: "development")
 - `DEPLOYMENT_VERSION` - Blue/green deployment version (default: "blue")
 - `SECRET_KEY` - JWT secret key (change in production!)

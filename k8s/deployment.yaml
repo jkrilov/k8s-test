@@ -6,7 +6,7 @@ metadata:
     app: k8s-test-app
     version: v1
 spec:
-  replicas: 2
+  replicas: 1  # Changed from 2 to 1 to match green deployment
   selector:
     matchLabels:
       app: k8s-test-app
@@ -37,9 +37,9 @@ spec:
         resources:
           requests:
             memory: "64Mi"
-            cpu: "100m"
+            cpu: "250m"  # Changed from 100m to match green deployment
           limits:
-            memory: "256Mi"
+            memory: "128Mi"  # Changed from 256Mi to match green deployment
             cpu: "500m"
         livenessProbe:
           httpGet:
@@ -69,7 +69,7 @@ spec:
   - port: 80
     targetPort: 8000
     protocol: TCP
-  type: ClusterIP
+  type: LoadBalancer  # Changed from ClusterIP to LoadBalancer for MetalLB
 ---
 apiVersion: v1
 kind: Secret

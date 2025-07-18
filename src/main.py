@@ -178,6 +178,37 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+# Configure OpenAPI to support Bearer token authentication
+app.openapi_schema = None
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    from fastapi.openapi.utils import get_openapi
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    
+    # Add Bearer token security scheme
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -293,7 +324,16 @@ async def login(login_request: LoginRequest):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/auth/protected")
+@app.get(
+    "/auth/protected",
+    responses={
+        200: {"description": "Success"},
+        401: {"description": "Unauthorized"},
+    },
+    openapi_extra={
+        "security": [{"BearerAuth": []}]
+    }
+)
 async def protected_endpoint(current_user: User = Depends(get_current_user)):
     """Protected endpoint that requires authentication"""
     return {

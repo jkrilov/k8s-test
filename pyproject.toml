@@ -9,33 +9,33 @@ description = "A simple FastAPI app for Kubernetes testing"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.116.0",
-    "uvicorn[standard]>=0.32.0",
-    "pydantic>=2.10.0",
-    "python-jose[cryptography]>=3.3.0",
-    "bcrypt>=4.3.0",
-    "python-multipart>=0.0.12",
-    "httpx>=0.28.0",
-    "prometheus-client>=0.21.0",
-    "psutil>=6.1.0",
+    "fastapi>=0.116.1",  # Updated from 0.116.0
+    "uvicorn[standard]>=0.32.1",  # Updated from 0.32.0
+    "pydantic>=2.10.0",  # Latest stable
+    "python-jose[cryptography]>=3.3.0",  # Latest stable
+    "bcrypt>=4.3.0",  # Latest stable
+    "python-multipart>=0.0.18",  # Updated from 0.0.12
+    "httpx>=0.28.1",  # Updated from 0.28.0
+    "prometheus-client>=0.21.1",  # Updated from 0.21.0
+    "psutil>=6.1.1",  # Updated from 6.1.0
 ]
 
 [dependency-groups]
 dev = [
-    "pytest>=8.3.0",
-    "pytest-asyncio>=0.24.0",
-    "pytest-cov>=6.0.0",
-    "black>=24.10.0",
-    "isort>=5.13.0",
-    "flake8>=7.1.0",
-    "mypy>=1.13.0",
-    "httpx>=0.28.0",
-    "bandit[toml]>=1.7.5",
+    "pytest>=8.3.4",  # Updated from 8.3.0
+    "pytest-asyncio>=0.25.0",  # Updated from 0.24.0
+    "pytest-cov>=6.0.0",  # Latest stable
+    "black>=24.10.0",  # Latest stable
+    "isort>=5.13.2",  # Updated from 5.13.0
+    "flake8>=7.1.1",  # Updated from 7.1.0
+    "mypy>=1.17.0",  # Updated from 1.13.0
+    "httpx>=0.28.1",  # Updated from 0.28.0
+    "bandit[toml]>=1.8.0",  # Updated from 1.7.5
 ]
 
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py311']  # Updated from py39 to match requires-python
 
 [tool.isort]
 profile = "black"
@@ -78,7 +78,7 @@ skips = ["B101", "B104", "B601"]
 addopts = "--cov=src --cov-report=html --cov-report=term-missing"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"  # Updated from 3.9 to match requires-python
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

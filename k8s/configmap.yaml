@@ -12,7 +12,7 @@ kind: PodDisruptionBudget
 metadata:
   name: k8s-test-pdb
 spec:
-  minAvailable: 2
+  minAvailable: 1  # Changed from 2 to 1 since we start with 1 replica
   selector:
     matchLabels:
       app: k8s-test-app
@@ -26,8 +26,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: k8s-test-app
-  minReplicas: 2
-  maxReplicas: 6
+  minReplicas: 1  # Changed from 2 to 1
+  maxReplicas: 3  # Changed from 6 to 3
   metrics:
   - type: Resource
     resource:

@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: k8s-test-app
-        image: localhost:32000/k8s-test-app:green
+        image: localhost:32000/k8s-test-app:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000

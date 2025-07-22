@@ -36,10 +36,10 @@ spec:
               key: secret-key
         resources:
           requests:
-            memory: "64Mi"
+            memory: "256Mi"
             cpu: "250m"  # Changed from 100m to match green deployment
           limits:
-            memory: "128Mi"  # Changed from 256Mi to match green deployment
+            memory: "512Mi"  # Changed from 256Mi to match green deployment
             cpu: "500m"
         livenessProbe:
           httpGet:
